@@ -58,10 +58,19 @@ async def createadv(interaction: discord.Interaction, message: str):
 # /addchannel ქომანდი - არხის დამატება MongoDB-ში
 @app_commands.describe(channel_id="Discord არხის ID, სადაც უნდა გაიგზავნოს რეკლამა")
 @bot.tree.command(name="addchannel", description="დამატეთ არხი სადაც გსურთ გაგზავნა")
-async def addchannel(interaction: discord.Interaction, channel_id: int):
-    # MongoDB-ში არხის ID-ის დამატება
-    db.channels.insert_one({"channel_id": channel_id})
-    await interaction.response.send_message(f"არხი {channel_id} წარმატებით დაემატა!", ephemeral=True)
+async def addchannel(interaction: discord.Interaction, channel_id: str):
+    try:
+        # არხის ID-ც უნდა გადატანილი იყოს integer ტიპზე
+        channel_id = int(channel_id)
+        
+        # MongoDB-ში არხის ID-ის დამატება
+        db.channels.insert_one({"channel_id": channel_id})
+        await interaction.response.send_message(f"არხი {channel_id} წარმატებით დაემატა!", ephemeral=True)
+    except ValueError:
+        await interaction.response.send_message("გთხოვთ, შეიყვანოთ სწორი არხის ID (მხოლოდ რიცხვი).", ephemeral=True)
+    except Exception as e:
+        print(f"შეცდომა addchannel-ში: {e}")
+        await interaction.response.send_message("შეცდომა მოხდა! სცადეთ თავიდან.", ephemeral=True)
 
 # /sendadv ქომანდი - გაგზავნის რეკლამას ყველა არხზე
 @bot.tree.command(name="sendadv", description="გაგზავნეთ შექმნილი რეკლამა ყველა არხზე")
