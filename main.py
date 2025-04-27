@@ -92,6 +92,7 @@ async def addlogchannel(interaction: discord.Interaction, channel_id: int):
     await interaction.response.send_message(f"ლოგ არხი {channel_id} წარმატებით დაინსტალირდა!", ephemeral=True)
 
 # ბოტის გაშვება
+@bot.event
 async def on_ready():
     print(f"ბოტი შეყვანილია როგორც {bot.user}")
     try:
