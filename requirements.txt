@@ -1,3 +1,2 @@
-colorama
-requests
-websocket
+discord.py
+pymongo
