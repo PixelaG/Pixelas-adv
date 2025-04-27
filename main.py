@@ -57,7 +57,7 @@ async def createadv(interaction: discord.Interaction, message: str):
         await interaction.followup.send("შეცდომა მოხდა! სცადეთ თავიდან.", ephemeral=True)
 
 # /addchannel ქომანდი - არხის დამატება MongoDB-ში
-@app_commands.describe(channel_id="Discord არხის ID, სადაც უნდა გაიგზავნოს რეკლამა")
+@app_commands.describe(channel="Discord არხი სადაც უნდა გაიგზავნოს რეკლამა")
 @bot.tree.command(name="addchannel", description="დამატეთ არხი სადაც გსურთ გაგზავნა")
 async def addchannel(interaction: discord.Interaction, channel: TextChannel):
     # MongoDB-ში არხის ID-ის დამატება
