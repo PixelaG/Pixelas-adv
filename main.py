@@ -38,14 +38,18 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 @app_commands.describe(message="შეტყობინება, რომელიც გსურს რომ შეიქმნას რეკლამა")
 @bot.tree.command(name="createadv", description="შექმენით რეკლამა, რომელიც გაგზავნდება არხებზე")
 async def createadv(interaction: discord.Interaction, message: str):
-    # MongoDB-ში შეტყობინების შენახვა
-    advertisements.insert_one({"message": message})
+    try:
+        # MongoDB-ში შეტყობინების შენახვა
+        advertisements.insert_one({"message": message})
 
-    # წარმატებული შეტყობინება
-    embed = discord.Embed(title="🟢 რეკლამა წარმატებით შეიქმნა", description=message, color=discord.Color.green())
-    embed.set_footer(text=f"შექმნილია {interaction.user.display_name}")
+        # წარმატებული შეტყობინება
+        embed = discord.Embed(title="🟢 რეკლამა წარმატებით შეიქმნა", description=message, color=discord.Color.green())
+        embed.set_footer(text=f"შექმნილია {interaction.user.display_name}")
 
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+    except Exception as e:
+        print(f"შეცდომა createadv-ში: {e}")
+        await interaction.response.send_message("შეცდომა მოხდა! სცადეთ თავიდან.", ephemeral=True)
 
 # /addchannel ქომანდი - არხის დამატება MongoDB-ში
 @app_commands.describe(channel_id="Discord არხის ID, სადაც უნდა გაიგზავნოს რეკლამა")
