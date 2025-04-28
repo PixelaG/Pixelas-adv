@@ -56,18 +56,17 @@ async def createadv(interaction: discord.Interaction, message: str):
             await interaction.response.send_message("შეცდომა მოხდა! სცადეთ თავიდან.", ephemeral=True)
 
 # /addchannel ქომანდი - არხის დამატება MongoDB-ში
-@app_commands.describe(channel="Discord არხი სადაც უნდა გაიგზავნოს რეკლამა")
-@bot.tree.command(name="addchannel", description="დამატეთ არხი სადაც გსურთ გაგზავნა")
-async def addchannel(interaction: discord.Interaction, channel: discord.TextChannel):
-    guild_id = interaction.guild.id  # სერვერის ID
+@app_commands.describe(server_id="Discord სერვერის ID, სადაც უნდა დაემატოს არხი", channel_id="Discord არხის ID")
+@bot.tree.command(name="addchannel", description="დამატეთ არხი და სერვერი MongoDB-ში")
+async def addchannel(interaction: discord.Interaction, server_id: int, channel_id: int):
+    try:
+        # MongoDB-ში სერვერის ID და არხის ID-ის შენახვა
+        db.channels.insert_one({"server_id": server_id, "channel_id": channel_id})
 
-    # MongoDB-ში არხის და სერვერის ID-ის დამატება
-    db.channels.insert_one({
-        "guild_id": guild_id,
-        "channel_id": channel.id
-    })
-
-    await interaction.response.send_message(f"არხი {channel.id} და სერვერი {guild_id} წარმატებით დაემატა!", ephemeral=True)
+        await interaction.response.send_message(f"არხი {channel_id} წარმატებით დაემატა სერვერზე {server_id}!", ephemeral=True)
+    except Exception as e:
+        print(f"შეცდომა მოხდა არხის დამატების დროს: {e}")
+        await interaction.response.send_message("შეცდომა მოხდა! სცადეთ თავიდან.", ephemeral=True)
 
 # /sendadv ქომანდი - გაგზავნის რეკლამას ყველა არხზე
 @bot.tree.command(name="sendadv", description="გაგზავნეთ შექმნილი რეკლამა ყველა არხზე")
