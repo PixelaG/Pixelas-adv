@@ -29,6 +29,7 @@ keep_alive()
 mongo_uri = os.getenv("MONGODB_URI")  # MongoDB Atlas-ის URI
 client = pymongo.MongoClient(mongo_uri)
 db = client['discord_advertiser']
+advertisements = db['advertisements']
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -50,7 +51,9 @@ async def createadv(interaction: discord.Interaction, message: str):
         await interaction.response.send_message(embed=embed, ephemeral=True)
     except Exception as e:
         print(f"Error occurred while creating advertisement: {e}")
-        await interaction.response.send_message("შეცდომა მოხდა! სცადეთ თავიდან.", ephemeral=True)
+        # მხოლოდ ერთხელ გავაგზავნოთ შეტყობინება
+        if not interaction.response.is_done():
+            await interaction.response.send_message("შეცდომა მოხდა! სცადეთ თავიდან.", ephemeral=True)
 
 # /addchannel ქომანდი - არხის დამატება MongoDB-ში
 @app_commands.describe(channel="Discord არხი სადაც უნდა გაიგზავნოს რეკლამა")
