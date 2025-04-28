@@ -41,8 +41,18 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 @bot.tree.command(name="createadv", description="შექმენით რეკლამა, რომელიც გაგზავნდება არხებზე")
 async def createadv(interaction: discord.Interaction, message: str):
     try:
+        # შემოწმება თუ არ არსებობს იგივე რეკლამა
+        existing_adv = advertisements.find_one({"message": message})
+
+        if existing_adv:
+            await interaction.response.send_message("ეს რეკლამა უკვე არსებობს!", ephemeral=True)
+            return
+
         # MongoDB-ში შეტყობინების შენახვა
-        advertisements.insert_one({"message": message})
+        advertisements.insert_one({
+            "message": message,
+            "user_id": interaction.user.id  # ვინმემ გამოიყენა ქომანდი
+        })
 
         # წარმატებული შეტყობინება
         embed = discord.Embed(title="🟢 რეკლამა წარმატებით შეიქმნა", description=message, color=discord.Color.green())
