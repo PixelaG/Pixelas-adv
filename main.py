@@ -103,11 +103,13 @@ async def sendadv(interaction: discord.Interaction):
             # MongoDB-ში ყველა ჩანაწერი ამ მომხმარებლისთვის
             user_channels = db.channels.find({"user_id": str(interaction.user.id)})
 
-            if user_channels.count() == 0:
+            # ჩეკი, თუ მომხმარებელს არ აქვს რეგისტრირებული არხები
+            user_channels_list = list(user_channels)
+            if len(user_channels_list) == 0:
                 await interaction.response.send_message("თქვენ არ გაქვთ რეგისტრირებული სერვერი და არხი.", ephemeral=True)
                 return
 
-            for user_channel in user_channels:
+            for user_channel in user_channels_list:
                 try:
                     server_id = user_channel["server_id"]
                     channel_obj = bot.get_channel(user_channel["channel_id"])
@@ -129,7 +131,6 @@ async def sendadv(interaction: discord.Interaction):
     except Exception as e:
         print(f"შეცდომა: {e}")
         await interaction.response.send_message("შეცდომა მოხდა! სცადეთ თავიდან.", ephemeral=True)
-
 # /addlogchannel ქომანდი - ლოგის არხის დამატება
 @app_commands.describe(channel_id="Discord არხის ID, სადაც გსურთ ლოგების მიღება")
 @bot.tree.command(name="addlogchannel", description="დამატეთ ლოგების არხი")
