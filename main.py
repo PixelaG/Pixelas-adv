@@ -92,7 +92,7 @@ async def addchannel(interaction: discord.Interaction, server_id: str, channel_i
         await interaction.response.send_message("შეცდომა მოხდა! სცადეთ თავიდან.", ephemeral=True)
 
 # /sendadv ქომანდი - გაგზავნის რეკლამას ყველა არხზე
-@app_commands.command(name="sendadv", description="გაგზავნეთ რეკლამა ყველა არხზე თქვენს სერვერზე")
+@bot.tree.command(name="sendadv", description="გაგზავნეთ რეკლამა ყველა არხზე თქვენს სერვერზე")
 async def sendadv(interaction: discord.Interaction):
     try:
         # MongoDB-ში დაცული რეკლამა
