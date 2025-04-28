@@ -56,7 +56,7 @@ async def createadv(interaction: discord.Interaction, message: str):
             await interaction.response.send_message("შეცდომა მოხდა! სცადეთ თავიდან.", ephemeral=True)
 
 # /addchannel ქომანდი - არხის დამატება MongoDB-ში
-@app_commands.describe(server_id="Discord სერვერის ID, სადაც უნდა დაემატოს არხი", channel_id="Discord არხის ID")
+@app_commands.describe(server_id="Discord სერვერის ID, სადაც უნდა დაემატოს არხი", channel_id="Discord არხის ID, სადაც უნდა გაიგზავნოს რეკლამა")
 @bot.tree.command(name="addchannel", description="დამატეთ არხი და სერვერი MongoDB-ში")
 async def addchannel(interaction: discord.Interaction, server_id: int, channel_id: int):
     try:
