@@ -70,19 +70,18 @@ async def addchannel(interaction: discord.Interaction, server_id: int, channel_i
 
 # /sendadv ქომანდი - გაგზავნის რეკლამას ყველა არხზე
 @bot.tree.command(name="sendadv", description="გაგზავნეთ შექმნილი რეკლამა ყველა არხზე")
-async def sendadv(interaction: discord.Interaction):
-    # MongoDB-ში დაცული რეკლამა
-    adv = db.advertisements.find_one()
-    if adv:
-        message = adv["message"]
-        # ყველა არხი და სერვერი MongoDB-ში
-        all_channels = db.channels.find()
+async def sendadv(interaction: discord.Interaction, server_id: int):
+    try:
+        # MongoDB-ში დაცული რეკლამა
+        adv = advertisements.find_one()
+        if adv:
+            message = adv["message"]
+            # MongoDB-ში არხების ძებნა სერვერის ID-ის მიხედვით
+            all_channels = db.channels.find({"server_id": server_id})
 
-        for channel in all_channels:
-            try:
-                guild = bot.get_guild(channel["guild_id"])  # სერვერის მოძებნა
-                if guild:
-                    channel_obj = guild.get_channel(channel["channel_id"])
+            for channel in all_channels:
+                try:
+                    channel_obj = bot.get_channel(channel["channel_id"])
                     if channel_obj:
                         await channel_obj.send(message)
                         # ლოგის შეტყობინება
@@ -90,13 +89,16 @@ async def sendadv(interaction: discord.Interaction):
                         if log_channel:
                             log_channel_obj = bot.get_channel(log_channel["channel_id"])
                             if log_channel_obj:
-                                await log_channel_obj.send(f"რეკლამა გაგზავნილია არხზე {channel['channel_id']} სერვერიდან {guild.id}")
-            except Exception as e:
-                print(f"მომხმარებლის არხზე {channel['channel_id']} გაგზავნა ვერ მოხერხდა: {e}")
+                                await log_channel_obj.send(f"რეკლამა გაგზავნილია არხზე {channel['channel_id']} სერვერზე {server_id}")
+                except Exception as e:
+                    print(f"მომხმარებლის არხზე {channel['channel_id']} გაგზავნა ვერ მოხერხდა: {e}")
 
-        await interaction.response.send_message("რეკლამა წარმატებით გაგზავნილია ყველა არხზე!", ephemeral=True)
-    else:
-        await interaction.response.send_message("რეკლამა არ არის შექმნილი!", ephemeral=True)
+            await interaction.response.send_message(f"რეკლამა წარმატებით გაგზავნილია ყველა არხზე სერვერზე {server_id}!", ephemeral=True)
+        else:
+            await interaction.response.send_message("რეკლამა არ არის შექმნილი!", ephemeral=True)
+    except Exception as e:
+        print(f"შეცდომა: {e}")
+        await interaction.response.send_message("შეცდომა მოხდა! სცადეთ თავიდან.", ephemeral=True)
 
 # /addlogchannel ქომანდი - ლოგის არხის დამატება
 @app_commands.describe(channel_id="Discord არხის ID, სადაც გსურთ ლოგების მიღება")
