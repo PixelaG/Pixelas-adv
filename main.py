@@ -70,6 +70,11 @@ async def createadv(interaction: discord.Interaction, message: str):
 @bot.tree.command(name="addchannel", description="დამატეთ არხი და სერვერი MongoDB-ში")
 async def addchannel(interaction: discord.Interaction, server_id: int, channel_id: int):
     try:
+        # შემოწმება თუ ორივე ID არის მთლიანი რიცხვები (integer)
+        if not isinstance(server_id, int) or not isinstance(channel_id, int):
+            await interaction.response.send_message("თქვენი მითითებული ID-ები არ არის სწორი ტიპის. გთხოვთ, მიუთითოთ მთლიანი რიცხვები.", ephemeral=True)
+            return
+
         # MongoDB-ში სერვერის ID და არხის ID-ის შენახვა
         db.channels.insert_one({"server_id": server_id, "channel_id": channel_id})
 
