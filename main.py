@@ -29,10 +29,10 @@ keep_alive()
 mongo_uri = os.getenv("MONGODB_URI")  # MongoDB Atlas-ის URI
 client = pymongo.MongoClient(mongo_uri)
 db = client['discord_advertiser']
-advertisements = db['advertisements']
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.guilds = True  # საჭიროა სერვერების ნახვისთვის
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 # /createadv ქომანდი - შექმნის რეკლამას და შეინახავს MongoDB-ში
@@ -59,31 +59,40 @@ async def createadv(interaction: discord.Interaction, message: str):
 # /addchannel ქომანდი - არხის დამატება MongoDB-ში
 @app_commands.describe(channel="Discord არხი სადაც უნდა გაიგზავნოს რეკლამა")
 @bot.tree.command(name="addchannel", description="დამატეთ არხი სადაც გსურთ გაგზავნა")
-async def addchannel(interaction: discord.Interaction, channel: TextChannel):
-    # MongoDB-ში არხის ID-ის დამატება
-    db.channels.insert_one({"channel_id": channel.id})
-    await interaction.response.send_message(f"არხი {channel.id} წარმატებით დაემატა!", ephemeral=True)
+async def addchannel(interaction: discord.Interaction, channel: discord.TextChannel):
+    guild_id = interaction.guild.id  # სერვერის ID
+
+    # MongoDB-ში არხის და სერვერის ID-ის დამატება
+    db.channels.insert_one({
+        "guild_id": guild_id,
+        "channel_id": channel.id
+    })
+
+    await interaction.response.send_message(f"არხი {channel.id} და სერვერი {guild_id} წარმატებით დაემატა!", ephemeral=True)
 
 # /sendadv ქომანდი - გაგზავნის რეკლამას ყველა არხზე
 @bot.tree.command(name="sendadv", description="გაგზავნეთ შექმნილი რეკლამა ყველა არხზე")
 async def sendadv(interaction: discord.Interaction):
     # MongoDB-ში დაცული რეკლამა
-    adv = advertisements.find_one()
+    adv = db.advertisements.find_one()
     if adv:
         message = adv["message"]
+        # ყველა არხი და სერვერი MongoDB-ში
         all_channels = db.channels.find()
 
         for channel in all_channels:
             try:
-                channel_obj = bot.get_channel(channel["channel_id"])
-                if channel_obj:
-                    await channel_obj.send(message)
-                    # ლოგის შეტყობინება
-                    log_channel = db.log_channels.find_one()
-                    if log_channel:
-                        log_channel_obj = bot.get_channel(log_channel["channel_id"])
-                        if log_channel_obj:
-                            await log_channel_obj.send(f"რეკლამა გაგზავნილია არხზე {channel['channel_id']}")
+                guild = bot.get_guild(channel["guild_id"])  # სერვერის მოძებნა
+                if guild:
+                    channel_obj = guild.get_channel(channel["channel_id"])
+                    if channel_obj:
+                        await channel_obj.send(message)
+                        # ლოგის შეტყობინება
+                        log_channel = db.log_channels.find_one()
+                        if log_channel:
+                            log_channel_obj = bot.get_channel(log_channel["channel_id"])
+                            if log_channel_obj:
+                                await log_channel_obj.send(f"რეკლამა გაგზავნილია არხზე {channel['channel_id']} სერვერიდან {guild.id}")
             except Exception as e:
                 print(f"მომხმარებლის არხზე {channel['channel_id']} გაგზავნა ვერ მოხერხდა: {e}")
 
