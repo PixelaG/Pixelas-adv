@@ -79,8 +79,12 @@ async def addchannel(interaction: discord.Interaction, server_id: str, channel_i
         server_id = int(server_id)
         channel_id = int(channel_id)
 
-        # MongoDB-ში სერვერის ID და არხის ID-ის შენახვა
-        db.channels.insert_one({"server_id": server_id, "channel_id": channel_id})
+        # MongoDB-ში სერვერის ID და არხის ID-ის შენახვა და მომხმარებლის ID
+        db.channels.insert_one({
+            "user_id": str(interaction.user.id),  # user_id, ვინ გამოიყენებს ქომანდას
+            "server_id": server_id,
+            "channel_id": channel_id
+        })
 
         await interaction.response.send_message(f"არხი {channel_id} წარმატებით დაემატა სერვერზე {server_id}!", ephemeral=True)
     except Exception as e:
@@ -88,19 +92,26 @@ async def addchannel(interaction: discord.Interaction, server_id: str, channel_i
         await interaction.response.send_message("შეცდომა მოხდა! სცადეთ თავიდან.", ephemeral=True)
 
 # /sendadv ქომანდი - გაგზავნის რეკლამას ყველა არხზე
-@bot.tree.command(name="sendadv", description="გაგზავნეთ შექმნილი რეკლამა ყველა არხზე")
-async def sendadv(interaction: discord.Interaction, server_id: int):
+@app_commands.command(name="sendadv", description="გაგზავნეთ რეკლამა ყველა არხზე თქვენს სერვერზე")
+async def sendadv(interaction: discord.Interaction):
     try:
         # MongoDB-ში დაცული რეკლამა
         adv = advertisements.find_one()
         if adv:
             message = adv["message"]
-            # MongoDB-ში არხების ძებნა სერვერის ID-ის მიხედვით
-            all_channels = db.channels.find({"server_id": server_id})
+            
+            # MongoDB-ში ყველა ჩანაწერი ამ მომხმარებლისთვის
+            user_channels = db.channels.find({"user_id": str(interaction.user.id)})
 
-            for channel in all_channels:
+            if user_channels.count() == 0:
+                await interaction.response.send_message("თქვენ არ გაქვთ რეგისტრირებული სერვერი და არხი.", ephemeral=True)
+                return
+
+            for user_channel in user_channels:
                 try:
-                    channel_obj = bot.get_channel(channel["channel_id"])
+                    server_id = user_channel["server_id"]
+                    channel_obj = bot.get_channel(user_channel["channel_id"])
+                    
                     if channel_obj:
                         await channel_obj.send(message)
                         # ლოგის შეტყობინება
@@ -108,11 +119,11 @@ async def sendadv(interaction: discord.Interaction, server_id: int):
                         if log_channel:
                             log_channel_obj = bot.get_channel(log_channel["channel_id"])
                             if log_channel_obj:
-                                await log_channel_obj.send(f"რეკლამა გაგზავნილია არხზე {channel['channel_id']} სერვერზე {server_id}")
+                                await log_channel_obj.send(f"რეკლამა გაგზავნილია არხზე {user_channel['channel_id']} სერვერზე {server_id}")
                 except Exception as e:
-                    print(f"მომხმარებლის არხზე {channel['channel_id']} გაგზავნა ვერ მოხერხდა: {e}")
+                    print(f"მომხმარებლის არხზე {user_channel['channel_id']} გაგზავნა ვერ მოხერხდა: {e}")
 
-            await interaction.response.send_message(f"რეკლამა წარმატებით გაგზავნილია ყველა არხზე სერვერზე {server_id}!", ephemeral=True)
+            await interaction.response.send_message(f"რეკლამა წარმატებით გაგზავნილია თქვენს არხებზე!", ephemeral=True)
         else:
             await interaction.response.send_message("რეკლამა არ არის შექმნილი!", ephemeral=True)
     except Exception as e:
