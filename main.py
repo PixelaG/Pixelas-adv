@@ -95,10 +95,10 @@ async def addchannel(interaction: discord.Interaction, server_id: str, channel_i
 @bot.tree.command(name="sendadv", description="გაგზავნეთ რეკლამა ყველა არხზე თქვენს სერვერზე")
 async def sendadv(interaction: discord.Interaction):
     try:
-        adv = advertisements.find_one()
+        adv = advertisements.find_one()  # MongoDB-დან რეკლამის მოძებნა
         if adv:
-            message = adv["message"]
-            
+            message = adv["message"]  # რეკლამის ტექსტი
+
             # MongoDB-ში ყველა ჩანაწერი ამ მომხმარებლისთვის
             user_channels = db.channels.find({"user_id": str(interaction.user.id)})
 
@@ -106,12 +106,16 @@ async def sendadv(interaction: discord.Interaction):
                 await interaction.response.send_message("თქვენ არ გაქვთ რეგისტრირებული სერვერი და არხი.", ephemeral=True)
                 return
 
+            # ნოტიფიკაცია მომხმარებლისთვის, რომ იწყება რეკლამის გაგზავნა
+            notify_message = await interaction.response.send_message("რეკლამა იწყება თქვენს არხებზე გაგზავნას...", ephemeral=True)
+
             for user_channel in user_channels:
                 try:
                     server_id = user_channel["server_id"]
                     channel_obj = bot.get_channel(user_channel["channel_id"])
                     
                     if channel_obj:
+                        # არხზე რეკლამის გაგზავნა
                         await channel_obj.send(message)
                         # ლოგის შეტყობინება
                         log_channel = db.log_channels.find_one()
@@ -122,7 +126,9 @@ async def sendadv(interaction: discord.Interaction):
                 except Exception as e:
                     print(f"მომხმარებლის არხზე {user_channel['channel_id']} გაგზავნა ვერ მოხერხდა: {e}")
 
-            await interaction.response.send_message(f"რეკლამა წარმატებით გაგზავნილია თქვენს არხებზე!", ephemeral=True)
+            # პასუხი (reply) პირველი შეტყობინებისათვის, როდესაც დასრულდება რეკლამის გაგზავნა
+            await notify_message.reply("თქვენი რეკლამა წარმატებით გაიგზავნა!")
+
         else:
             await interaction.response.send_message("რეკლამა არ არის შექმნილი!", ephemeral=True)
     except Exception as e:
